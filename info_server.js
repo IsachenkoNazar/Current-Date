@@ -1,8 +1,7 @@
 
-const express = require("express")
-const moment = require("moment")
-
-
+import express from "express"
+import moment from "moment"
+import { products, addProduct } from "./src/repositories/products.js"
 
 const HOST = "localhost"
 const PORT = 5000
@@ -13,64 +12,31 @@ const information = express()
 
 information.use(express.json())
 
-const products = [
-  {
-    id: 1,
-    name: "apple",
-    price: 2,
-    category: "food"
-  },
-  {
-    id: 2,
-    name: "table",
-    price: 5,
-    category: "furniture"
-  },
-  {
-    id: 3,
-    name: "milk",
-    price: 7,
-    category: "drink"
-  },
-  {
-    id: 4,
-    name: "laptop",
-    price: 5,
-    category: "device"
-  },
-  {
-    id: 5,
-    name: "flower",
-    price: 10,
-    category: "plant"
-  }
-]
 
 
 information.get('/products', (req, res) => {
-  const { category, take, fail } = req.query;
+  const { category, take, fail, image } = req.query;
+
+  if (image !== undefined && (typeof image !== "string" || image.trim().length === 0)) {
+    return res.status(422).json({ ok: false, description: "Valid Error" });
+  }
 
   if (fail === "true") {
-    return res.status(500).json({
-      ok: false,
-      error: "Our own error"
-    });
+    return res.status(500).json({ ok: false, error: "Our own error" });
   }
-  
+
   let result = category 
-  ? products.filter(p => p.category === category) 
-  : [...products];
-  
+    ? products.filter(p => p.category === category) 
+    : [...products];
+
   if (take) {
     const takeLimit = parseInt(take, 10);
     if (!isNaN(takeLimit) && takeLimit > 0) {
       result = result.slice(0, takeLimit);
     }
   }
-  
-  res.status(200).json({
-    products: result
-  });
+
+  res.status(200).json({ products: result });
 });
 
 
@@ -104,21 +70,10 @@ information.post('/products', async (req, res) => {
       id: products.length + 1,
       name: name,
       price: price,
-      category: category
+      category: category,
+      image: image
     }
     
-    function addProduct(newProduct) {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (fail === "true") {
-            return reject(new Error("Our own Error"))
-          }
-          products.push(newProduct)
-          resolve(newProduct)
-        }, 1000)
-      })
-    }
-
     await addProduct(newProduct)
     res.status(201).json({ok: true, product: newProduct})
 
